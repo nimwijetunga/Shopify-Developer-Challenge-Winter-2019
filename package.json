@@ -1,0 +1,20 @@
+{
+  "name": "shopifydevchallenge",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node backend/server.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "exists": "^1.0.1",
+    "express": "^4.16.3",
+    "firebase-admin": "^6.0.0",
+    "is-empty": "^1.2.0",
+    "nodemon": "^1.18.4"
+  }
+}
