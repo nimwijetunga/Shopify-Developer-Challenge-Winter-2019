@@ -15,6 +15,12 @@ var products_db = require('./products_db.js');
 var user_db = require('./user_db.js');
 var empty = require('is-empty');
 
+var express_options = {
+    extensions: ['htm', 'html'],
+}
+
+const root = {root:'../frontend'}
+
 function get_response(response){
     return JSON.stringify({posted:response});
 }
@@ -40,7 +46,7 @@ async function addProduct(req, res){
     }
 
     //Add the product to the DB and send response
-    let add_product_response = await products_db.add_product(productId, productName, price, img_url);
+    let add_product_response = await products_db.add_product(productId, productName, price, img_url).catch(err => {return false;});
     if(!add_product_response){
         res.send(get_response(false));
     }else{
@@ -52,7 +58,7 @@ async function addProduct(req, res){
 async function getProduct(req, res){
     var productId = req.query['productId'];
     //Get the product info and send response
-    var products = await products_db.find_product_info(productId);
+    var products = await products_db.find_product_info(productId).catch(err => {return false;});
     if(!products){
         res.send(get_response(false));
     }else{
@@ -69,11 +75,60 @@ async function deleteProduct(req, res){
         return;
     }
     //Delete product from DB and send response
-    let delete_product_response = await products_db.delete_product(productId);
+    let delete_product_response = await products_db.delete_product(productId).catch(err => {return false;});
     if(!delete_product_response){
         res.send(get_response_del(false));
     }else{
         res.send(get_response_del(true));
+    }
+}
+
+async function createUser(req, res){
+    if(empty(req) || empty(req.body)) {
+        res.send(get_response(false));
+        return;
+    }
+
+    let body = req.body;
+
+    let password = body.password, username = body.username, first = body.first, last = body.last;
+
+    if(empty(password) || empty(username) || empty(first) || empty(last)) {
+        res.send(get_response(false));
+        return;
+    }
+    
+    let add_user_response = await user_db.sign_up(first, last, username, password).catch(err => {return false;});
+
+    if(!add_user_response){
+        res.send(get_response(false));
+    }else{
+        res.send(get_response(true));
+    }
+
+}
+
+async function login(req, res){
+    if(empty(req) || empty(req.body)) {
+        res.send(get_response(false));
+        return;
+    }
+
+    let body = req.body;
+
+    let password = body.password, username = body.username;
+
+    if(empty(password) || empty(username)) {
+        res.send(get_response(false));
+        return;
+    }
+
+    let login_response = await user_db.login(username, password).catch(err => {return false;});
+
+    if(!login_response){
+        res.send(get_response(false));
+    }else{
+        res.send(get_response(true));
     }
 }
 
@@ -90,7 +145,20 @@ app.get('/api/getProduct', [getProduct])
 
 app.delete('/api/deleteProduct', [deleteProduct])
 
+//User db endpoints
+app.post('/api/createUser', [createUser])
+
+app.post('/api/login', [login])
+
 app.set('port', process.env.port || 3000)
+
+//Rendering Frontend
+
+app.use(express.static('../frontend', express_options))
+
+app.get('/signup', (req,res) => {
+    res.sendFile("signup.html", root);
+})
 
 app.listen(app.get('port'), () => {
     console.log("App started on port: " + app.get('port'));
