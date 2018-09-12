@@ -17,8 +17,8 @@ var add_user = function (first, last, username, password) {
         usersRef.push({
             email: username,
             password: hash_password(password),
-            first:first,
-            last:last
+            first: first,
+            last: last
         }, (error) => {
             reject(false);
         });
@@ -39,11 +39,14 @@ var find_user_info = function (username) {
                 let pass = val.password;
                 let key = child.key;
                 let first = child.first, last = child.last;
+                var products = undefined;
+                if (val.products != undefined) products = val.products;
                 let user_obj = {
                     username: email,
                     password: pass,
-                    first:first,
-                    last:last,
+                    first: first,
+                    last: last,
+                    products: products,
                     key: key
                 }
                 if (username == email) resolve(user_obj);//User exists
@@ -57,7 +60,7 @@ var find_user_info = function (username) {
  * Encrypt user supplied password
  * @param {*} password is the password to be encrypted
  */
-var hash_password = function (password){
+var hash_password = function (password) {
     return passwordHash.generate(password);
 }
 
@@ -66,19 +69,19 @@ var hash_password = function (password){
  * @param {*} password is the user supplied password
  * @param {*} hash is what is stored in the DB
  */
-var verify_password = function (password, hash){
+var verify_password = function (password, hash) {
     return passwordHash.verify(password, hash);
 }
 
 module.exports = {
-    sign_up: async function(first, last, username, password){
+    sign_up: async function (first, last, username, password) {
         //Check if user alread exists
         let res = await find_user_info(username).catch((err) => {
             return false;
         })
         //If not add user
-        if(!res){
-            return await add_user(first, last, username, password).catch((err) => {return false;})
+        if (!res) {
+            return await add_user(first, last, username, password).catch((err) => { return false; })
         }
         return false;
     },
@@ -89,7 +92,7 @@ module.exports = {
         })
         //Check if password hash is correct
         if (res) {
-            if(verify_password(password, res.password)) return true;
+            if (verify_password(password, res.password)) return true;
         }
         return false;
     },
@@ -102,8 +105,35 @@ module.exports = {
         let profile = {
             username: res.username,
             first: res.first,
-            last: res.last
+            last: res.last,
+            products: res.products
         };
         return profile;
     },
+    /**
+     * Add product to users product array
+     * @param {*} username 
+     * @param {*} product is a product to add to users cart (should contain price, quantity, product id)
+     */
+    add_to_cart: async function (username, product) {
+        let user = await find_user_info(username).catch((err) => {
+            return false;
+        });
+        if (!user) return false;
+        let products = user.products;
+        if (user.products != null) products.push(product);
+        else products = [product];
+        let update = {
+            products: products
+        };
+
+        var usersRef = ref.child('users/' + user.key);
+
+        return new Promise(function (resolve, reject) {
+            usersRef.update(update, (err) => {
+                if (err) reject(false);
+                else resolve(true);
+            })
+        })
+    }
 }

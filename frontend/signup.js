@@ -34,8 +34,7 @@ $(document).ready(function(e) {
                 $("#error > #error-p").text(message);
             }else{
                 $.cookie("username", username, 1);
-                // console.log(window.location.host + '/search');
-                // window.location = "search"
+                window.location = "products"
             }
         },
         error: function (err) {

@@ -39,14 +39,14 @@ async function addProduct(req, res){
     let body = req.body;
 
     //Get post req body
-    let productId = body.productId, productName = body.productName, price = body.price, img_url = body.img_url;
-    if(empty(productId) || empty(productName) || empty(price) || empty(img_url)){
+    let quantity = body.quantity, productId = body.productId, productName = body.productName, price = body.price, img_url = body.img_url;
+    if(empty(productId) || empty(productName) || empty(price) || empty(img_url) || empty(quantity)){
         res.send(get_response(false));
         return;
     }
 
     //Add the product to the DB and send response
-    let add_product_response = await products_db.add_product(productId, productName, price, img_url).catch(err => {return false;});
+    let add_product_response = await products_db.add_product(productId, productName, price, img_url, quantity).catch(err => {return false;});
     if(!add_product_response){
         res.send(get_response(false));
     }else{
@@ -132,6 +132,28 @@ async function login(req, res){
     }
 }
 
+async function addCart(req, res){
+    if(empty(req) || empty(req.body)) {
+        res.send(get_response(false));
+        return;
+    }
+
+    let body = req.body;
+
+    let username = body.username, product = body.product;
+    if(empty(username) || empty(product)){
+        res.send(get_response(false));
+        return;
+    }
+
+    let add_product_response = await user_db.add_to_cart(username, product);
+    if(!add_product_response){
+        res.send(get_response(false));
+    }else{
+        res.send(get_response(true));
+    }
+}
+
 app.use(bodyParser.urlencoded({
     extended: true
 }));
@@ -150,6 +172,8 @@ app.post('/api/createUser', [createUser])
 
 app.post('/api/login', [login])
 
+app.patch('/api/addCart', [addCart])
+
 app.set('port', process.env.port || 3000)
 
 //Rendering Frontend
@@ -158,6 +182,10 @@ app.use(express.static('../frontend', express_options))
 
 app.get('/signup', (req,res) => {
     res.sendFile("signup.html", root);
+})
+
+app.get('/products', (req,res) => {
+    res.sendFile("products.html", root);
 })
 
 app.listen(app.get('port'), () => {

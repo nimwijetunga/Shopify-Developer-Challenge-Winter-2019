@@ -26,13 +26,14 @@ module.exports = {
      * @param {floar} price 
      * @param {String} img_url for front_end use
      */
-    add_product: function (productId, productName, price, img_url) {
+    add_product: function (productId, productName, price, img_url, quantity) {
         return new Promise(function (resolve, reject) {
             productsRef.push({
                 productId: productId,
                 productName: productName,
                 price: price,
-                img_url: img_url
+                img_url: img_url,
+                quantity:quantity
             }, (error) => {
                 reject(false);
             });
@@ -51,13 +52,14 @@ module.exports = {
                 var products = [];
                 snap.forEach(function (child) {
                     let val = child.val();
-                    let productIdCur = val.productId, productName = val.productName, price = val.price, img_url = val.img_url, key = child.key
+                    let quantity = val.quantity, productIdCur = val.productId, productName = val.productName, price = val.price, img_url = val.img_url, key = child.key
                     let product = {
                         productId: productIdCur,
                         productName: productName,
                         price: price,
                         img_url: img_url,
-                        key: key
+                        key: key,
+                        quantity: quantity
                     }
                     products.push(product);
                     if (exists(productId)) {
