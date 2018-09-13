@@ -121,7 +121,19 @@ module.exports = {
         });
         if (!user) return false;
         let products = user.products;
-        if (user.products != null) products.push(product);
+        if (user.products != null){
+            let match = false;
+            user.products.forEach((product_itr) =>{
+                if(product_itr['id'] == product['id']){
+                    product_itr['quantity'] = Number(product_itr['quantity']);
+                    product_itr['quantity'] += Number(product['quantity']);
+                    match = true;
+                }
+            })
+            if(!match){
+                user.products.push(product);
+            }
+        }
         else products = [product];
         let update = {
             products: products

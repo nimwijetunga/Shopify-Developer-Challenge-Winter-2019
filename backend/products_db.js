@@ -77,6 +77,26 @@ module.exports = {
         });
     },
 
+    update_product_amount: async function(productId, product_amount){
+        let product = await this.find_product_info(productId).catch((err) => {
+            return false;
+        })
+        if (!product) return false;
+
+        let update = {
+            quantity: product_amount
+        };
+
+        var productsRef = ref.child('products/' + product.key);
+
+        return new Promise(function (resolve, reject) {
+            productsRef.update(update, (err) => {
+                if (err) reject(false);
+                else resolve(true);
+            })
+        })
+    },
+
     /**
      * deletes a product from the database
      * @param {int} productId is unique product id

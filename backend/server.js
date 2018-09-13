@@ -83,6 +83,30 @@ async function deleteProduct(req, res){
     }
 }
 
+async function modifyProduct(req, res){
+    if(empty(req) || empty(req.body)) {
+        res.send(get_response(false));
+        return;
+    }
+
+    let body = req.body;
+
+    let productId = body.productId, quantity = body.quantity;
+
+    if(empty(productId) || empty(quantity)) {
+        res.send(get_response(false));
+        return;
+    }
+
+    let product_modification_response = await products_db.update_product_amount(productId, quantity).catch(err => {return false;});
+
+    if(!product_modification_response){
+        res.send(get_response(false));
+    }else{
+        res.send(get_response(true));
+    }
+}
+
 async function createUser(req, res){
     if(empty(req) || empty(req.body)) {
         res.send(get_response(false));
@@ -166,6 +190,8 @@ app.post('/api/addProduct', [addProduct])
 app.get('/api/getProduct', [getProduct])
 
 app.delete('/api/deleteProduct', [deleteProduct])
+
+app.patch('/api/modifyProduct', [modifyProduct])
 
 //User db endpoints
 app.post('/api/createUser', [createUser])
