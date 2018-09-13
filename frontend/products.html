@@ -27,6 +27,7 @@
     <div class="container">
         <div class="row">
             <div class="col-sm-4">
+                <a href="#"  st="button" id="sign-out" class="btn btn-primary">Sign Out</a>
                 <a class="carousel-control-prev" href="#carouselExampleControls" role="button" data-slide="prev">
                     <span class="carousel-control-prev-icon" aria-hidden="true"></span>
                     <span class="sr-only">Previous</span>
@@ -35,6 +36,7 @@
             <div class="col-sm-4">
                 <div class="container-fluid">
                     <h1 class="text-center">Products</h1>
+                    <br>
                     <textarea id="template">
                                     <div id="carouselExampleControls" class="carousel slide" data-ride="carousel">
                                         <div class="carousel-inner">
@@ -42,7 +44,7 @@
                                                 <div class="{{class}}">
                                                     <div class="card" style="width: 20rem;">
                                                         <div class="card-body">
-                                                            <h5 class="card-title">{{productName}}</h5>
+                                                            <h5 style="text-transform: uppercase;" class="card-title">{{productName}}</h5>
                                                             <p class="card-text">
                                                                 <ul>
                                                                     <li>Amount Remaining: {{quantity}}</li>
@@ -76,6 +78,38 @@
                     <span class="carousel-control-next-icon" aria-hidden="true"></span>
                     <span class="sr-only">Next</span>
                 </a>
+            </div>
+        </div>
+    </div>
+
+    <br><br>
+
+    <!--Create Invoice-->
+    <h1>Invoice</h1>
+    <br>    
+        <div class="col-4">
+            <textarea id="template-invoice" style="display: none;">
+                <div class="list-group" id="list-tab" role="tablist">
+                {{#.}}
+                    <div id="product-id-invoice" style="display: none;">{{id}}</div>
+                    <a class="list-group-item list-group-item-action" class="{{class}}" id="list-home-list" data-toggle="list" href="#list-home" role="tab" aria-controls="home">
+                        <b style="text-transform: uppercase;">{{name}}</b>
+                        <ul>
+                            <li>
+                                Quantity: {{quantity}}
+                            </li>
+                            <li>
+                                Price: ${{price}}
+                            </li>
+                        </ul>
+                    </a>
+                {{/.}}
+                <a class="list-group-item list-group-item-action" class="{{class}}" id="list-home-list" data-toggle="list" href="#list-home" role="tab" aria-controls="home">
+                    <b style="text-transform: uppercase;">Total: ${{total}}</b>
+                </a>
+                </div>
+            </textarea>
+            <div id="result-invoice">    
             </div>
         </div>
     </div>

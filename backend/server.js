@@ -178,6 +178,22 @@ async function addCart(req, res){
     }
 }
 
+async function userProfile(req, res){
+    var username = req.query['username'];
+    if(empty(username)){
+        res.send(get_response(false));
+        return;
+    }
+
+    let profile = await user_db.get_user_profile(username).catch(err => {return false});
+    
+    if(!profile){
+        res.send(get_response(false));
+    }else{
+        res.send(JSON.stringify(profile));
+    }
+}
+
 app.use(bodyParser.urlencoded({
     extended: true
 }));
@@ -193,12 +209,16 @@ app.delete('/api/deleteProduct', [deleteProduct])
 
 app.patch('/api/modifyProduct', [modifyProduct])
 
+
 //User db endpoints
 app.post('/api/createUser', [createUser])
 
 app.post('/api/login', [login])
 
 app.patch('/api/addCart', [addCart])
+
+app.get('/api/userProfile',[userProfile])
+
 
 app.set('port', process.env.port || 3000)
 

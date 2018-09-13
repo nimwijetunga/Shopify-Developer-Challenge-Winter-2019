@@ -1,6 +1,6 @@
 $(document).ready(function (e) {
     let username = $.cookie('username');
-    if(typeof username == 'undefined'){
+    if(typeof username == 'undefined' || username == "null"){
         window.location = "/";
     }
     save_productslist();
@@ -19,7 +19,8 @@ function save_productslist() {
             localStorage.setItem('products', JSON.stringify(res));
             var products = JSON.parse(JSON.stringify(res));
             render_products(products);
-            add_event_listner_cart();
+            render_invoice();
+            add_event_listners();
 
         },
         error: function (err) {
@@ -52,12 +53,60 @@ function search(productId, products) {
     }
 }
 
-function add_event_listner_cart() {
+function add_event_listners() {
     $("[class*=add-cart]").click(function (event) {
         var productId = event.target.id;
         var amount = $(`#${productId}-amount`).val();
         buy_item(amount, productId);
     });
+    $("#sign-out").click(function () {
+        $.cookie('username', null, { path: '/' });
+        location.reload();
+    })
+}
+
+function get_user_profile(username){
+    if(!username) return false;
+    return new Promise((resolve, reject) => {
+        $.ajax({
+            success: function (res) {
+                if (typeof res.deleted != 'undefined' && res.deleted === false) {
+                    alert("Error Fetching Invoice");
+                    resolve(false);
+                    return;
+                }
+                resolve(JSON.parse(JSON.stringify(res)));
+            },
+            error: function (err) {
+                alert("Error Fetching Invoice");
+                resolve(false);
+            },
+            processData: false,
+            type: 'GET',
+            url: '/api/userProfile?username='+username
+        })
+    })
+}
+
+async function render_invoice(){
+    var username = $.cookie('username');
+    let userProfile = await get_user_profile(username).catch(err => {return false;});
+    if(!userProfile) return false;
+    userProfile = JSON.parse(userProfile);
+    if(!userProfile.products) return false;
+    let user_products = userProfile.products;
+    var total_cost = 0
+
+    //Get total purchase cost for user
+    user_products.forEach((product) => {
+        total_cost += Number(product.price) * Number(product.quantity);
+    });   
+    
+    user_products['total'] = total_cost;
+
+    template = $('#template-invoice').val();
+    html = Mustache.render(template, user_products);
+    $('#result-invoice').html(html);
 }
 
 function delete_product(productId) {
