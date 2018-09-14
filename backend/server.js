@@ -41,17 +41,23 @@ async function addProduct(req, res) {
         return;
     }
 
+    var admin_password = req.get('admin-password');
+    if(admin_password != "1234"){
+        res.send(get_response(false));
+        return;
+    }
+
     let body = req.body;
 
     //Get post req body
-    let quantity = body.quantity, productId = body.productId, productName = body.productName, price = body.price, img_url = body.img_url;
-    if (empty(productId) || empty(productName) || empty(price) || empty(img_url) || empty(quantity)) {
+    let quantity = body.quantity, productId = body.productId, productName = body.productName, price = body.price;
+    if (empty(productId) || empty(productName) || empty(price) || empty(quantity)) {
         res.send(get_response(false));
         return;
     }
 
     //Add the product to the DB and send response
-    let add_product_response = await products_db.add_product(productId, productName, price, img_url, quantity).catch(err => { return false; });
+    let add_product_response = await products_db.add_product(productId, productName, price, quantity).catch(err => { return false; });
     if (!add_product_response) {
         res.send(get_response(false));
     } else {

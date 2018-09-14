@@ -6,30 +6,39 @@ $(document).ready(function (e) {
     save_productslist();
 });
 
-
-function save_productslist() {
-    $.ajax({
-        dataType: 'json',
-        success: function (res) {
-            console.log(res);
-            if (typeof res.posted != 'undefined' && res.posted === false) {
-                alert("Error Fetching Products");
-                return;
-            }
-            localStorage.setItem('products', JSON.stringify(res));
-            var products = JSON.parse(JSON.stringify(res));
-            render_products(products);
-            render_invoice();
-            add_event_listners();
-
-        },
-        error: function (err) {
-            alert("Error Fetching Data");
-        },
-        processData: false,
-        type: 'GET',
-        url: '/api/getProduct'
+function get_products(){
+    return new Promise((resolve, reject) => {
+        $.ajax({
+            dataType: 'json',
+            success: function (res) {
+                console.log(res);
+                if (typeof res.posted != 'undefined' && res.posted === false) {
+                    alert("Error Fetching Products");
+                    resolve(false);
+                    return;
+                }
+                localStorage.setItem('products', JSON.stringify(res));
+                var products = JSON.parse(JSON.stringify(res));
+                resolve(products);    
+            },
+            error: function (err) {
+                alert("Error Fetching Data");
+                resolve(false);
+            },
+            processData: false,
+            type: 'GET',
+            url: '/api/getProduct'
+        })
     })
+}
+
+
+async function save_productslist() {
+    var products = await get_products().catch(err => {return false});
+    if(!products) return false;
+    render_products(products);
+    render_invoice();
+    add_event_listners();
 }
 
 function render_products(products) {
@@ -62,6 +71,9 @@ function add_event_listners() {
     $("#sign-out").click(function () {
         $.cookie('username', null, { path: '/' });
         location.reload();
+    })
+    $("#add-product-btn").click(function () {
+        add_product();
     })
 }
 
@@ -191,11 +203,52 @@ function save_to_cart(product_data) {
     })
 }
 
+function add_product(){
+    let productName = $('#productName').val();
+    let productId = $('#productId').val();
+    let price = $('#price').val();
+    let quantity = $('#quantity').val();
+    let admin_password = $('#admin-key').val();
+
+    let product_data = {
+        productName:productName,
+        productId:productId,
+        price:price,
+        quantity:quantity
+    }
+
+    $.ajax({
+        dataType: 'json',
+        headers: {
+            'Content-Type': 'application/json',
+            'admin-password': admin_password
+        },
+        data: JSON.stringify(product_data),
+        success: function (res) {
+            if (typeof res.posted != 'undefined' && res.posted === false) {
+                alert("Error Adding Product");
+                return;
+            }
+            alert('Added Product')
+            location.reload();
+        },
+        error: function (err) {
+            alert("Error Adding Product");
+        },
+        processData: false,
+        type: 'POST',
+        url: '/api/addProduct'
+    })
+}
+
 async function buy_item(amount, productId) {
     if (typeof productId == 'undefined' || typeof amount == 'undefined' || !productId || !amount) {
         return;
     }
-    let products = JSON.parse(localStorage.getItem('products'));
+    let products = await get_products().catch(err => {return false});
+
+    if(!products) return false;
+
     let product = search(productId, products);
     if (product.quantity - amount < 0) {
         alert('Not Enough Items Available');

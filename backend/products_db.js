@@ -24,21 +24,26 @@ module.exports = {
      * @param {int} productId unique id
      * @param {String} productName 
      * @param {floar} price 
-     * @param {String} img_url for front_end use
      */
-    add_product: function (productId, productName, price, img_url, quantity) {
-        return new Promise(function (resolve, reject) {
-            productsRef.push({
-                productId: productId,
-                productName: productName,
-                price: price,
-                img_url: img_url,
-                quantity:quantity
-            }, (error) => {
-                reject(false);
+    add_product: async function (productId, productName, price, quantity) {
+        let product = await this.find_product_info(productId).catch((err) => {
+            return false;
+        })
+        if (!product){
+            return new Promise(function (resolve, reject) {
+                productsRef.push({
+                    productId: productId,
+                    productName: productName,
+                    price: price,
+                    quantity:quantity
+                }, (error) => {
+                    reject(false);
+                });
+                resolve(true);
             });
-            resolve(true);
-        });
+        }else{
+            return false;
+        }
     },
 
     /**
@@ -52,12 +57,11 @@ module.exports = {
                 var products = [];
                 snap.forEach(function (child) {
                     let val = child.val();
-                    let quantity = val.quantity, productIdCur = val.productId, productName = val.productName, price = val.price, img_url = val.img_url, key = child.key
+                    let quantity = val.quantity, productIdCur = val.productId, productName = val.productName, price = val.price, key = child.key
                     let product = {
                         productId: productIdCur,
                         productName: productName,
                         price: price,
-                        img_url: img_url,
                         key: key,
                         quantity: quantity
                     }
