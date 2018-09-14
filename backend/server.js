@@ -10,7 +10,7 @@ admin.initializeApp({
     credential: admin.credential.cert({
         projectId: process.env.PROJECT_ID,
         clientEmail: process.env.clientEmail,
-        privateKey: process.env.privateKey
+        privateKey: process.env.privateKey.replace(/\\n/g, '\n')
     }),
     databaseURL: "https://shopifyproducts-b6758.firebaseio.com/"
 });
