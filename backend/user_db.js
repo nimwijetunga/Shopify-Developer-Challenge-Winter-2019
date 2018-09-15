@@ -116,6 +116,7 @@ module.exports = {
      * @param {*} product is a product to add to users cart (should contain price, quantity, product id)
      */
     add_to_cart: async function (username, product) {
+        if(isNaN(product.quantity)) return false;
         let user = await find_user_info(username).catch((err) => {
             return false;
         });
