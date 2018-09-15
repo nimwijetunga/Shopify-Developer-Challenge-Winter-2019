@@ -51,7 +51,7 @@ async function addProduct(req, res) {
 
     //Get post req body
     let quantity = body.quantity, productId = body.productId, productName = body.productName, price = body.price;
-    if (empty(productId) || empty(productName) || empty(price) || empty(quantity)) {
+    if (empty(productId) || empty(productName) || empty(price) || empty(quantity) || isNaN(quantity)) {
         res.send(get_response(false));
         return;
     }
@@ -94,6 +94,7 @@ async function deleteProduct(req, res) {
     }
 }
 
+//PATCH req to modify product entries 
 async function modifyProduct(req, res) {
     if (empty(req) || empty(req.body)) {
         res.send(get_response(false));
@@ -104,7 +105,7 @@ async function modifyProduct(req, res) {
 
     let productId = body.productId, quantity = body.quantity;
 
-    if (empty(productId) || empty(quantity)) {
+    if (empty(productId) || empty(quantity) || isNaN(quantity)) {
         res.send(get_response(false));
         return;
     }
@@ -118,6 +119,7 @@ async function modifyProduct(req, res) {
     }
 }
 
+//POST req to create a new user
 async function createUser(req, res) {
     if (empty(req) || empty(req.body)) {
         res.send(get_response(false));
@@ -143,6 +145,7 @@ async function createUser(req, res) {
 
 }
 
+//User login authentication system
 async function login(req, res) {
     if (empty(req) || empty(req.body)) {
         res.send(get_response(false));
@@ -167,6 +170,7 @@ async function login(req, res) {
     }
 }
 
+//PATCH req to add a product to the users invoice
 async function addCart(req, res) {
     if (empty(req) || empty(req.body)) {
         res.send(get_response(false));
@@ -176,7 +180,7 @@ async function addCart(req, res) {
     let body = req.body;
 
     let username = body.username, product = body.product;
-    if (empty(username) || empty(product)) {
+    if (empty(username) || empty(product) || isNaN(product.quantity)) {
         res.send(get_response(false));
         return;
     }
@@ -189,6 +193,7 @@ async function addCart(req, res) {
     }
 }
 
+//GET req to get the user profile
 async function userProfile(req, res) {
     var username = req.query['username'];
     if (empty(username)) {
@@ -212,23 +217,23 @@ app.use(bodyParser.urlencoded({
 app.use(bodyParser.json())
 
 //Products db endpoints
-app.post('/api/addProduct', [addProduct])
+app.post('/api/addProduct', [addProduct]) //Add prod to DB
 
-app.get('/api/getProduct', [getProduct])
+app.get('/api/getProduct', [getProduct])//Get a product from DB
 
-app.delete('/api/deleteProduct', [deleteProduct])
+app.delete('/api/deleteProduct', [deleteProduct])//Delete product from DB
 
-app.patch('/api/modifyProduct', [modifyProduct])
+app.patch('/api/modifyProduct', [modifyProduct])//Modify product info (like quanity avialable)
 
 
 //User db endpoints
-app.post('/api/createUser', [createUser])
+app.post('/api/createUser', [createUser]) //Create user
 
-app.post('/api/login', [login])
+app.post('/api/login', [login])//Login authentication 
 
-app.patch('/api/addCart', [addCart])
+app.patch('/api/addCart', [addCart])//Add item to users invoice
 
-app.get('/api/userProfile', [userProfile])
+app.get('/api/userProfile', [userProfile])//get the usre profile
 
 
 app.set('port', process.env.port || 3000)

@@ -6,18 +6,6 @@ var ref = admin.app().database().ref();
 var productsRef = ref.child('products');
 var productRef = productsRef.push();
 
-// async function test(){
-//     await prod_db.add_product(1, "apple", 1, "apple.jpg")
-//     await prod_db.add_product(2, "orange", 1, "orange.jpg")
-//     let products = await prod_db.find_product_info();
-//     console.log(products);
-//     await prod_db.delete_product(2);
-//     products = await prod_db.find_product_info();
-//     console.log(products);
-// }
-
-// test();
-
 module.exports = {
     /**
      * Add a product to the database
