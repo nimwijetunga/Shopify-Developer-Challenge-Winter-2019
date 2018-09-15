@@ -239,7 +239,6 @@ app.get('/api/userProfile', [userProfile])//get the usre profile
 app.set('port', process.env.port || 3000)
 
 //Rendering Frontend
-
 app.use(express.static('./frontend', express_options))
 
 app.get('/signup', (req, res) => {
