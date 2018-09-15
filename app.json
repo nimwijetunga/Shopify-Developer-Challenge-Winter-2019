@@ -1,0 +1,6 @@
+{
+  "name": "Shopify-Challenge-Store",
+  "description": "Technical Challenge for Shopify",
+  "repository": "https://github.com/nimwijetunga/ShopifyDeveloperChallenge2018",
+  "keywords": ["node", "express", "static"]
+}
