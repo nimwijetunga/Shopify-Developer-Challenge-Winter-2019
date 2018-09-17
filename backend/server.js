@@ -217,22 +217,250 @@ app.use(bodyParser.urlencoded({
 app.use(bodyParser.json())
 
 //Products db endpoints
+
+/**
+ * @api {post} /api/addProduct Add Product
+ * @apiName /api/addProduct
+ * @apiGroup Product
+ * @apiDescription Add product user to products database
+ * @apiHeaderExample {json} Header-Example:
+ *     {
+ *       "admin-password": "xxxx"
+ *     }
+ * @apiParamExample {json} Request-Example:
+ *  {
+ *      "productId":"19",
+ *	    "productName":"peach",
+ *	    "price":4,
+ *	    "quantity": 200
+ *   }
+ *
+ *
+ * @apiSuccessExample Success-Response:
+ *  {
+ *      "posted":true
+ *   }
+ *
+ * @apiError Product could not be added.
+ *
+ * @apiErrorExample Error-Response:
+ *     {
+ *        "posted": false
+ *     }
+ */
 app.post('/api/addProduct', [addProduct]) //Add prod to DB
 
+/**
+ * @api {get} /api/getProduct/ Get Product(s)
+ * @apiName /api/getProduct
+ * @apiGroup Product
+ * @apidescription Get a list of products or a single product(if product param is specified)
+ * @apiParam {productId} Product unique id.
+ *
+ *
+ * @apiSuccessExample Success-Response:
+ *  [
+ *          {
+ *               "productId": "1",
+ *               "productName": "pear",
+ *               "price": "13",
+ *               "img_url": "pear.jpg",
+ *               "key": "-LM5i9ElD6_7kv0VJrHN"
+ *           },
+ *           {
+ *               "productId": "2",
+ *               "productName": "apple",
+ *               "price": "13",
+ *               "img_url": "apple.jpg",
+ *               "key": "-LM5lJwDYyAErIJM9mJL"
+ *           }
+ *   ]
+ *
+ * @apiError Product could not be found.
+ *
+ * @apiErrorExample Error-Response:
+ *     {
+ *        "posted": false
+ *     }
+ */
 app.get('/api/getProduct', [getProduct])//Get a product from DB
 
+/**
+ * @api {delete} /api/deleteProduct Delete Product
+ * @apiName /api/deleteProduct
+ * @apiGroup Product
+ * @apidescription Delete a product given a product ID
+ *
+ * @apiHeaderExample {json} Header-Example:
+ *     {
+ *       "productID": "1"
+ *     }
+ *
+ *
+ * @apiSuccessExample Success-Response:
+ *  {
+ *      "deleted": true
+ *   }
+ *
+ * @apiError Product could not be deleted.
+ *
+ * @apiErrorExample Error-Response:
+ *     {
+ *        "deleted": false
+ *     }
+ */
 app.delete('/api/deleteProduct', [deleteProduct])//Delete product from DB
 
+/**
+ * @api {patch} /api/modifyProduct Modify Product
+ * @apiName /api/modifyProduct
+ * @apiGroup Product
+ * @apidescription Modify product information
+ *
+ * @apiParamExample {json} Request-Example:
+ * {
+ *	    "productId":1,
+	    "quantity": 10
+ *  }
+ *
+ * @apiSuccessExample Success-Response:
+ *  {
+ *      "posted":true
+ *   }
+ *
+ * @apiError Product could not be modified.
+ *
+ * @apiErrorExample Error-Response:
+ *     {
+ *        "posted": false
+ *     }
+ */
 app.patch('/api/modifyProduct', [modifyProduct])//Modify product info (like quanity avialable)
 
 
-//User db endpoints
+/**********************User db endpoints************/
+
+/**
+ * @api {post} /api/createUser/ Sign-Up
+ * @apiName /api/createUser/
+ * @apiGroup User
+ * @apiDescription Create a new user in the DB
+ * @apiParamExample {json} Request-Example:
+ *  {
+ *       "password":"1234",
+ *       "username":"person123",
+ *       "first":"Person",
+ *       "last":"Last"
+ *   }
+ *
+ *
+ * @apiSuccessExample Success-Response:
+ *  {
+ *      "posted":true
+ *   }
+ *
+ * @apiError User could not be created.
+ *
+ * @apiErrorExample Error-Response:
+ *     {
+ *        "posted": false
+ *     }
+ */
 app.post('/api/createUser', [createUser]) //Create user
 
+/**
+ * @api {post} /api/login Login
+ * @apiName /api/login
+ * @apiGroup User
+ * @apiDescription Login user to shop
+ * @apiParamExample {json} Request-Example:
+ *  {
+ *       "password":"1234",
+ *       "username":"person123",
+ *   }
+ *
+ *
+ * @apiSuccessExample Success-Response:
+ *  {
+ *      "posted":true
+ *   }
+ *
+ * @apiError User was not found.
+ *
+ * @apiErrorExample Error-Response:
+ *     {
+ *        "posted": false
+ *     }
+ */
 app.post('/api/login', [login])//Login authentication 
 
+/**
+ * @api {patch} /api/addCart Add Cart
+ * @apiName /api/addCart
+ * @apiGroup User
+ * @apidescription Add product to cart
+ *
+ * @apiParam {username} Users unique username.
+ * @apiParamExample {json} Request-Example:
+ * {
+ *	"username":"nim.wijetunga@gmail.com",
+ *	"product":{
+ *		"name":"orange",
+ *		"quantity":7,
+ *		"price":4,
+ *		"id":3
+ *	  }
+ *   }
+ *
+ * @apiSuccessExample Success-Response:
+ *  {
+ *      "posted":true
+ *   }
+ *
+ * @apiError Product could not be added to cart.
+ *
+ * @apiErrorExample Error-Response:
+ *     {
+ *        "posted": false
+ *     }
+ */
 app.patch('/api/addCart', [addCart])//Add item to users invoice
 
+/**
+ * @api {get} /api/userProfile/ User Profile
+ * @apiName /api/userProfile
+ * @apiGroup User
+ * @apidescription Request User information
+ *
+ * @apiParam {username} Users unique username.
+ *
+ *
+ * @apiSuccessExample Success-Response:
+ *  {
+ *   "username": "nim.wijetunga@gmail.com",
+ *    "products": [
+ *          {
+ *               "id": "1",
+ *               "name": "apple",
+ *               "price": "12",
+ *               "quantity": 4
+ *           },
+ *           {
+ *               "id": "3",
+ *             "name": "orange",
+ *              "price": "12",
+ *               "quantity": "2"
+ *          }
+ *       ]
+ *   }
+ *
+ * @apiError User was not found.
+ *
+ * @apiErrorExample Error-Response:
+ *     {
+ *        "posted": false
+ *     }
+ */
 app.get('/api/userProfile', [userProfile])//get the usre profile
 
 
@@ -240,6 +468,7 @@ app.set('port', process.env.PORT || 3000)
 
 //Rendering Frontend
 app.use(express.static('./frontend', express_options))
+app.use(express.static('./frontend/apidoc', express_options))
 
 app.get('/signup', (req, res) => {
     res.sendFile("signup.html", root);
@@ -247,6 +476,10 @@ app.get('/signup', (req, res) => {
 
 app.get('/products', (req, res) => {
     res.sendFile("products.html", root);
+})
+
+app.get('/docs', (req, res) => {
+    res.sendFile("index.html", {root:'./frontend/apidoc'});
 })
 
 app.listen(app.get('port'), () => {
