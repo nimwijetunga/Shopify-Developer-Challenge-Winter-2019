@@ -236,7 +236,7 @@ app.patch('/api/addCart', [addCart])//Add item to users invoice
 app.get('/api/userProfile', [userProfile])//get the usre profile
 
 
-app.set('port', process.env.port || 3000)
+app.set('port', process.env.PORT || 3000)
 
 //Rendering Frontend
 app.use(express.static('./frontend', express_options))

@@ -56,7 +56,7 @@ function render_products(products) {
 
 function search(productId, products) {
     for (var i = 0; i < products.length; i++) {
-        if (products[i].productId === productId) {
+        if ((products[i].productId) == productId) {
             return products[i];
         }
     }
