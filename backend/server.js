@@ -2,6 +2,9 @@ const express = require('express')
 const bodyParser = require('body-parser');
 const app = express();
 var admin = require('firebase-admin');
+var Validator = require('jsonschema').Validator;
+var v = new Validator();
+
 
 require('dotenv').config()
 
@@ -36,6 +39,17 @@ function get_response_del(response) {
 
 //POST Req for products
 async function addProduct(req, res) {
+
+    var prod_schema = {
+        "type": "object",
+        "properties": {
+            "productName":{"type":"string"},
+            "price":{"type":"number"},
+            "quantity":{"type":"number"},
+        },
+        "required":["productId", "productName", "price", "quantity"]
+    }
+    
     if (empty(req) || empty(req.body)) {
         res.send(get_response(false));
         return;
@@ -47,14 +61,14 @@ async function addProduct(req, res) {
         return;
     }
 
+    //Get post req body
     let body = req.body;
 
-    //Get post req body
-    let quantity = body.quantity, productId = body.productId, productName = body.productName, price = body.price;
-    if (empty(productId) || empty(productName) || empty(price) || empty(quantity) || isNaN(quantity)) {
+    if(!empty(v.validate(req.body, prod_schema).errors)){
         res.send(get_response(false));
         return;
     }
+    let quantity = body.quantity, productId = body.productId, productName = body.productName, price = body.price;
 
     //Add the product to the DB and send response
     let add_product_response = await products_db.add_product(productId, productName, price, quantity).catch(err => { return false; });
@@ -178,9 +192,22 @@ async function addCart(req, res) {
     }
 
     let body = req.body;
+    var schema = {
+        "type": "object",
+        "properties": {
+            "username":{"type":"string"},
+            "product":{
+                "type":"object",
+                "properties":{
+                    "quantity":{"type":"number"}
+                }
+            },
+        },
+        "required":["username", "product"]
+    }
 
     let username = body.username, product = body.product;
-    if (empty(username) || empty(product) || isNaN(product.quantity)) {
+    if (!empty(v.validate(req.body, schema).errors)) {
         res.send(get_response(false));
         return;
     }

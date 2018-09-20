@@ -213,9 +213,10 @@ function add_product(){
     let product_data = {
         productName:productName,
         productId:productId,
-        price:price,
-        quantity:quantity
+        price:Number(price),
+        quantity:Number(quantity)
     }
+    console.log(product_data);
 
     $.ajax({
         dataType: 'json',
