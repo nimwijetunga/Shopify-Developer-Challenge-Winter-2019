@@ -257,9 +257,9 @@ async function buy_item(amount, productId) {
     } else {
         let user_product = {
             name: product.productName,
-            id: product.productId,
-            quantity: amount,
-            price: product.price
+            id: Number(product.productId),
+            quantity: Number(amount),
+            price: Number(product.price)
         }
         let product_data = {};
         product_data['username'] = $.cookie('username');
