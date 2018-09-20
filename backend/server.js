@@ -117,9 +117,18 @@ async function modifyProduct(req, res) {
 
     let body = req.body;
 
+    var schema = {
+        "type": "object",
+        "properties": {
+            "productId":{"type":"string"},
+            "quantity":{"type":"number"},
+        },
+        "required":["productId", "quantity"]
+    }
+
     let productId = body.productId, quantity = body.quantity;
 
-    if (empty(productId) || empty(quantity) || isNaN(quantity)) {
+    if (!empty(v.validate(req.body, schema).errors)) {
         res.send(get_response(false));
         return;
     }

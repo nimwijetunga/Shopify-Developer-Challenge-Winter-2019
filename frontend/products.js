@@ -153,7 +153,7 @@ function update_product_info(productId, amount) {
             headers: {
                 'Content-Type': 'application/json'
             },
-            data: JSON.stringify({ productId: productId, quantity: amount }),
+            data: JSON.stringify({ productId: productId, quantity: Number(amount) }),
             success: function (res) {
                 console.log(res);
                 if (typeof res.posted != 'undefined' && res.posted === false) {
