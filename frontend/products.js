@@ -10,6 +10,9 @@ function get_products(){
     return new Promise((resolve, reject) => {
         $.ajax({
             dataType: 'json',
+            headers: {
+                'token': $.cookie('username')
+            },
             success: function (res) {
                 console.log(res);
                 if (typeof res.posted != 'undefined' && res.posted === false) {
@@ -77,10 +80,12 @@ function add_event_listners() {
     })
 }
 
-function get_user_profile(username){
-    if(!username) return false;
+function get_user_profile(){
     return new Promise((resolve, reject) => {
         $.ajax({
+            headers: {
+                'token': $.cookie('username')
+            },
             success: function (res) {
                 if (typeof res.deleted != 'undefined' && res.deleted === false) {
                     alert("Error Fetching Invoice");
@@ -95,14 +100,14 @@ function get_user_profile(username){
             },
             processData: false,
             type: 'GET',
-            url: '/api/userProfile?username='+username
+            url: '/api/userProfile'
         })
     })
 }
 
 async function render_invoice(){
     var username = $.cookie('username');
-    let userProfile = await get_user_profile(username).catch(err => {return false;});
+    let userProfile = await get_user_profile().catch(err => {return false;});
     if(!userProfile) return false;
     userProfile = JSON.parse(userProfile);
     if(!userProfile.products) return false;
@@ -126,6 +131,7 @@ function delete_product(productId) {
         $.ajax({
             headers: {
                 'productID': productId,
+                'token': $.cookie('username')
             },
             success: function (res) {
                 console.log(res);
@@ -151,7 +157,8 @@ function update_product_info(productId, amount) {
         $.ajax({
             dataType: 'json',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'token': $.cookie('username')
             },
             data: JSON.stringify({ productId: productId, quantity: Number(amount) }),
             success: function (res) {
@@ -179,7 +186,8 @@ function save_to_cart(product_data) {
         $.ajax({
             dataType: 'json',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'token': $.cookie('username')
             },
             data: JSON.stringify(product_data),
             success: function (res) {
@@ -208,7 +216,6 @@ function add_product(){
     let productId = $('#productId').val();
     let price = $('#price').val();
     let quantity = $('#quantity').val();
-    let admin_password = $('#admin-key').val();
 
     let product_data = {
         productName:productName,
@@ -216,13 +223,12 @@ function add_product(){
         price:Number(price),
         quantity:Number(quantity)
     }
-    console.log(product_data);
 
     $.ajax({
         dataType: 'json',
         headers: {
             'Content-Type': 'application/json',
-            'admin-password': admin_password
+            'admin-token': $.cookie('username')
         },
         data: JSON.stringify(product_data),
         success: function (res) {
@@ -262,7 +268,6 @@ async function buy_item(amount, productId) {
             price: Number(product.price)
         }
         let product_data = {};
-        product_data['username'] = $.cookie('username');
         product_data['product'] = user_product;
 
         await save_to_cart(product_data);

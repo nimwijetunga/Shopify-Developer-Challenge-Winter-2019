@@ -17,6 +17,7 @@
     "firebase-admin": "^6.0.0",
     "is-empty": "^1.2.0",
     "jsonschema": "^1.2.4",
+    "jsonwebtoken": "^8.3.0",
     "nodemon": "^1.18.4",
     "password-hash": "^1.2.2"
   }

@@ -4,6 +4,8 @@ const app = express();
 var admin = require('firebase-admin');
 var Validator = require('jsonschema').Validator;
 var v = new Validator();
+var jwt = require('jsonwebtoken');
+var config = require('./config.js');
 
 
 require('dotenv').config()
@@ -37,7 +39,63 @@ function get_response_del(response) {
     return JSON.stringify({ deleted: response });
 }
 
-//POST Req for products
+function create_token(userId){
+    return jwt.sign({ id: userId }, config.secret, {
+        expiresIn: 86400 // expires in 24 hours
+    });
+}
+
+function decode_username(token){
+    return new Promise((resolve, reject) => {
+        jwt.verify(token, config.secret, function(err, decoded) {
+            if (err) {
+                reject(false);
+            }else{
+                resolve(decoded);
+            }
+        });
+    })
+}
+
+async function is_valid_user(req){
+    let token = req.get('token');
+    let decoded_token = await decode_username(token).catch(err => {return false;});
+    if(!decoded_token){
+        return false;
+    }
+    return true;
+}
+
+/**
+ * @api {post} /api/addProduct Add Product
+ * @apiName /api/addProduct
+ * @apiGroup Product
+ * @apiDescription Add product user to products database
+ * @apiHeaderExample {json} Header-Example:
+ *     {
+ *       "admin-token": "xxxx"
+ *     }
+ * @apiParamExample {json} Request-Example:
+ *  {
+ *      "productId":"19",
+ *	    "productName":"peach",
+ *	    "price":4,
+ *	    "quantity": 200
+ *   }
+ *
+ *
+ * @apiSuccessExample Success-Response:
+ *  {
+ *      "posted":true
+ *   }
+ *
+ * @apiError Product could not be added.
+ *
+ * @apiErrorExample Error-Response:
+ *     {
+ *        "posted": false
+ *     }
+ */
 async function addProduct(req, res) {
 
     var prod_schema = {
@@ -55,8 +113,9 @@ async function addProduct(req, res) {
         return;
     }
 
-    var admin_password = req.get('admin-password');
-    if(admin_password != "1234"){
+    var admin_token = req.get('admin-token');
+    var username = await decode_username(admin_token).catch(err => {return false;});
+    if(username.id != process.env.adminUsername){
         res.send(get_response(false));
         return;
     }
@@ -79,9 +138,48 @@ async function addProduct(req, res) {
     }
 }
 
-//GET Request for products
+/**
+ * @api {get} /api/getProduct/ Get Product(s)
+ * @apiName /api/getProduct
+ * @apiGroup Product
+ * @apidescription Get a list of products or a single product(if product param is specified)
+ * @apiParam {productId} Product unique id.
+ * @apiHeaderExample {json} Header-Example:
+ *     {
+ *       "token": "xxxx"
+ *     }
+ *
+ * @apiSuccessExample Success-Response:
+ *  [
+ *          {
+ *               "productId": "1",
+ *               "productName": "pear",
+ *               "price": 13,
+ *               "key": "-LM5i9ElD6_7kv0VJrHN",
+ *               "quantity":270
+ *           },
+ *           {
+ *               "productId": "2",
+ *               "productName": "apple",
+ *               "price": 1,
+ *               "key": "-LM5lJwDYyAErIJM9mJL"
+ *               "quantity":370
+ *           }
+ *   ]
+ *
+ * @apiError Product could not be found.
+ *
+ * @apiErrorExample Error-Response:
+ *     {
+ *        "posted": false
+ *     }
+ */
 async function getProduct(req, res) {
     var productId = req.query['productId'];
+    if(!(await is_valid_user(req))){
+        res.send(get_response(false));
+        return;
+    }    
     //Get the product info and send response
     var products = await products_db.find_product_info(productId).catch(err => { return false; });
     if (!products) {
@@ -91,10 +189,40 @@ async function getProduct(req, res) {
     }
 }
 
-//DELETE Request for products
+/**
+ * @api {delete} /api/deleteProduct Delete Product
+ * @apiName /api/deleteProduct
+ * @apiGroup Product
+ * @apidescription Delete a product given a product ID
+ *
+ * @apiHeaderExample {json} Header-Example:
+ *     {
+ *       "productID": "1",
+ *       "token" "xxxx"
+ *     }
+ *
+ *
+ * @apiSuccessExample Success-Response:
+ *  {
+ *      "deleted": true
+ *   }
+ *
+ * @apiError Product could not be deleted.
+ *
+ * @apiErrorExample Error-Response:
+ *     {
+ *        "deleted": false
+ *     }
+ */
 async function deleteProduct(req, res) {
     //Get product id from header
     var productId = req.get('productId');
+
+    if(!(await is_valid_user(req))){
+        res.send(get_response(false));
+        return;
+    }   
+
     if (empty(productId)) {
         res.send(get_response_del(false));
         return;
@@ -108,12 +236,45 @@ async function deleteProduct(req, res) {
     }
 }
 
-//PATCH req to modify product entries 
+/**
+ * @api {patch} /api/modifyProduct Modify Product
+ * @apiName /api/modifyProduct
+ * @apiGroup Product
+ * @apidescription Modify product information
+ *
+ * @apiHeaderExample {json} Header-Example:
+ *     {
+ *       "token": "xxxx"
+ *     }
+ * 
+ * @apiParamExample {json} Request-Example:
+ * {
+ *	    "productId":1,
+	    "quantity": 10
+ *  }
+ *
+ * @apiSuccessExample Success-Response:
+ *  {
+ *      "posted":true
+ *   }
+ *
+ * @apiError Product could not be modified.
+ *
+ * @apiErrorExample Error-Response:
+ *     {
+ *        "posted": false
+ *     }
+ */
 async function modifyProduct(req, res) {
     if (empty(req) || empty(req.body)) {
         res.send(get_response(false));
         return;
     }
+
+    if(!(await is_valid_user(req))){
+        res.send(get_response(false));
+        return;
+    }   
 
     let body = req.body;
 
@@ -142,7 +303,33 @@ async function modifyProduct(req, res) {
     }
 }
 
-//POST req to create a new user
+/**
+ * @api {post} /api/createUser/ Sign-Up
+ * @apiName /api/createUser/
+ * @apiGroup User
+ * @apiDescription Create a new user in the DB
+ * @apiParamExample {json} Request-Example:
+ *  {
+ *       "password":"1234",
+ *       "username":"person123",
+ *       "first":"Person",
+ *       "last":"Last"
+ *   }
+ *
+ *
+ * @apiSuccessExample Success-Response:
+ *  {
+ *      "posted":true,
+ *      "token":"xxxx"
+ *   }
+ *
+ * @apiError User could not be created.
+ *
+ * @apiErrorExample Error-Response:
+ *     {
+ *        "posted": false
+ *     }
+ */
 async function createUser(req, res) {
     if (empty(req) || empty(req.body)) {
         res.send(get_response(false));
@@ -163,12 +350,37 @@ async function createUser(req, res) {
     if (!add_user_response) {
         res.send(get_response(false));
     } else {
-        res.send(get_response(true));
+        let token = await create_token(username);
+        res.send({posted:true, token:token});
     }
 
 }
 
-//User login authentication system
+/**
+ * @api {post} /api/login Login
+ * @apiName /api/login
+ * @apiGroup User
+ * @apiDescription Login user to shop
+ * @apiParamExample {json} Request-Example:
+ *  {
+ *       "password":"1234",
+ *       "username":"person123",
+ *   }
+ *
+ *
+ * @apiSuccessExample Success-Response:
+ *  {
+ *      "posted":true,
+ *      "token":"xxxx"
+ *   }
+ *
+ * @apiError User was not found.
+ *
+ * @apiErrorExample Error-Response:
+ *     {
+ *        "posted": false
+ *     }
+ */
 async function login(req, res) {
     if (empty(req) || empty(req.body)) {
         res.send(get_response(false));
@@ -189,11 +401,44 @@ async function login(req, res) {
     if (!login_response) {
         res.send(get_response(false));
     } else {
-        res.send(get_response(true));
+        let token = await create_token(username);
+        res.send({posted:true, token:token});
     }
 }
 
-//PATCH req to add a product to the users invoice
+/**
+ * @api {patch} /api/addCart Add Cart
+ * @apiName /api/addCart
+ * @apiGroup User
+ * @apidescription Add product to cart
+ *
+ * @apiHeaderExample {json} Header-Example:
+ *     {
+ *       "token": "xxxx"
+ *     }
+ * 
+ * @apiParamExample {json} Request-Example:
+ * {
+ *	"product":{
+ *		"name":"orange",
+ *		"quantity":7,
+ *		"price":4,
+ *		"id":3
+ *	  }
+ *   }
+ *
+ * @apiSuccessExample Success-Response:
+ *  {
+ *      "posted":true
+ *   }
+ *
+ * @apiError Product could not be added to cart.
+ *
+ * @apiErrorExample Error-Response:
+ *     {
+ *        "posted": false
+ *     }
+ */
 async function addCart(req, res) {
     if (empty(req) || empty(req.body)) {
         res.send(get_response(false));
@@ -201,10 +446,19 @@ async function addCart(req, res) {
     }
 
     let body = req.body;
+
+    let token = req.get('token');
+    
+    var username = await decode_username(token).catch(err => {return false;});
+    username = username.id;
+    if(!username){
+        res.send(get_response(false));
+        return;
+    }
+
     var schema = {
         "type": "object",
         "properties": {
-            "username":{"type":"string"},
             "product":{
                 "type":"object",
                 "properties":{
@@ -212,16 +466,16 @@ async function addCart(req, res) {
                 }
             },
         },
-        "required":["username", "product"]
+        "required":["product"]
     }
 
-    let username = body.username, product = body.product;
+    let product = body.product;
     if (!empty(v.validate(req.body, schema).errors)) {
         res.send(get_response(false));
         return;
     }
 
-    let add_product_response = await user_db.add_to_cart(username, product);
+    let add_product_response = await user_db.add_to_cart(username, product).catch(err => {return false;});
     if (!add_product_response) {
         res.send(get_response(false));
     } else {
@@ -229,9 +483,47 @@ async function addCart(req, res) {
     }
 }
 
-//GET req to get the user profile
+/**
+ * @api {get} /api/userProfile/ User Profile
+ * @apiName /api/userProfile
+ * @apiGroup User
+ * @apidescription Request User information
+ *
+ * @apiHeaderExample {json} Header-Example:
+ *     {
+ *       "token": "xxxx"
+ *     }
+ *
+ * @apiSuccessExample Success-Response:
+ *  {
+ *   "username": "nim.wijetunga@gmail.com",
+ *    "products": [
+ *          {
+ *               "id": "1",
+ *               "name": "apple",
+ *               "price": 12,
+ *               "quantity": 4
+ *           },
+ *           {
+ *               "id": "3",
+ *             "name": "orange",
+ *              "price": 12,
+ *               "quantity": 2
+ *          }
+ *       ]
+ *   }
+ *
+ * @apiError User was not found.
+ *
+ * @apiErrorExample Error-Response:
+ *     {
+ *        "posted": false
+ *     }
+ */
 async function userProfile(req, res) {
-    var username = req.query['username'];
+    var token = req.get('token');
+    let username = await decode_username(token).catch(err => {return false;});
+    username = username.id;
     if (empty(username)) {
         res.send(get_response(false));
         return;
@@ -254,249 +546,23 @@ app.use(bodyParser.json())
 
 //Products db endpoints
 
-/**
- * @api {post} /api/addProduct Add Product
- * @apiName /api/addProduct
- * @apiGroup Product
- * @apiDescription Add product user to products database
- * @apiHeaderExample {json} Header-Example:
- *     {
- *       "admin-password": "xxxx"
- *     }
- * @apiParamExample {json} Request-Example:
- *  {
- *      "productId":"19",
- *	    "productName":"peach",
- *	    "price":4,
- *	    "quantity": 200
- *   }
- *
- *
- * @apiSuccessExample Success-Response:
- *  {
- *      "posted":true
- *   }
- *
- * @apiError Product could not be added.
- *
- * @apiErrorExample Error-Response:
- *     {
- *        "posted": false
- *     }
- */
 app.post('/api/addProduct', [addProduct]) //Add prod to DB
 
-/**
- * @api {get} /api/getProduct/ Get Product(s)
- * @apiName /api/getProduct
- * @apiGroup Product
- * @apidescription Get a list of products or a single product(if product param is specified)
- * @apiParam {productId} Product unique id.
- *
- *
- * @apiSuccessExample Success-Response:
- *  [
- *          {
- *               "productId": "1",
- *               "productName": "pear",
- *               "price": "13",
- *               "img_url": "pear.jpg",
- *               "key": "-LM5i9ElD6_7kv0VJrHN"
- *           },
- *           {
- *               "productId": "2",
- *               "productName": "apple",
- *               "price": "13",
- *               "img_url": "apple.jpg",
- *               "key": "-LM5lJwDYyAErIJM9mJL"
- *           }
- *   ]
- *
- * @apiError Product could not be found.
- *
- * @apiErrorExample Error-Response:
- *     {
- *        "posted": false
- *     }
- */
 app.get('/api/getProduct', [getProduct])//Get a product from DB
 
-/**
- * @api {delete} /api/deleteProduct Delete Product
- * @apiName /api/deleteProduct
- * @apiGroup Product
- * @apidescription Delete a product given a product ID
- *
- * @apiHeaderExample {json} Header-Example:
- *     {
- *       "productID": "1"
- *     }
- *
- *
- * @apiSuccessExample Success-Response:
- *  {
- *      "deleted": true
- *   }
- *
- * @apiError Product could not be deleted.
- *
- * @apiErrorExample Error-Response:
- *     {
- *        "deleted": false
- *     }
- */
 app.delete('/api/deleteProduct', [deleteProduct])//Delete product from DB
 
-/**
- * @api {patch} /api/modifyProduct Modify Product
- * @apiName /api/modifyProduct
- * @apiGroup Product
- * @apidescription Modify product information
- *
- * @apiParamExample {json} Request-Example:
- * {
- *	    "productId":1,
-	    "quantity": 10
- *  }
- *
- * @apiSuccessExample Success-Response:
- *  {
- *      "posted":true
- *   }
- *
- * @apiError Product could not be modified.
- *
- * @apiErrorExample Error-Response:
- *     {
- *        "posted": false
- *     }
- */
 app.patch('/api/modifyProduct', [modifyProduct])//Modify product info (like quanity avialable)
 
 
 /**********************User db endpoints************/
 
-/**
- * @api {post} /api/createUser/ Sign-Up
- * @apiName /api/createUser/
- * @apiGroup User
- * @apiDescription Create a new user in the DB
- * @apiParamExample {json} Request-Example:
- *  {
- *       "password":"1234",
- *       "username":"person123",
- *       "first":"Person",
- *       "last":"Last"
- *   }
- *
- *
- * @apiSuccessExample Success-Response:
- *  {
- *      "posted":true
- *   }
- *
- * @apiError User could not be created.
- *
- * @apiErrorExample Error-Response:
- *     {
- *        "posted": false
- *     }
- */
 app.post('/api/createUser', [createUser]) //Create user
 
-/**
- * @api {post} /api/login Login
- * @apiName /api/login
- * @apiGroup User
- * @apiDescription Login user to shop
- * @apiParamExample {json} Request-Example:
- *  {
- *       "password":"1234",
- *       "username":"person123",
- *   }
- *
- *
- * @apiSuccessExample Success-Response:
- *  {
- *      "posted":true
- *   }
- *
- * @apiError User was not found.
- *
- * @apiErrorExample Error-Response:
- *     {
- *        "posted": false
- *     }
- */
 app.post('/api/login', [login])//Login authentication 
 
-/**
- * @api {patch} /api/addCart Add Cart
- * @apiName /api/addCart
- * @apiGroup User
- * @apidescription Add product to cart
- *
- * @apiParam {username} Users unique username.
- * @apiParamExample {json} Request-Example:
- * {
- *	"username":"nim.wijetunga@gmail.com",
- *	"product":{
- *		"name":"orange",
- *		"quantity":7,
- *		"price":4,
- *		"id":3
- *	  }
- *   }
- *
- * @apiSuccessExample Success-Response:
- *  {
- *      "posted":true
- *   }
- *
- * @apiError Product could not be added to cart.
- *
- * @apiErrorExample Error-Response:
- *     {
- *        "posted": false
- *     }
- */
 app.patch('/api/addCart', [addCart])//Add item to users invoice
 
-/**
- * @api {get} /api/userProfile/ User Profile
- * @apiName /api/userProfile
- * @apiGroup User
- * @apidescription Request User information
- *
- * @apiParam {username} Users unique username.
- *
- *
- * @apiSuccessExample Success-Response:
- *  {
- *   "username": "nim.wijetunga@gmail.com",
- *    "products": [
- *          {
- *               "id": "1",
- *               "name": "apple",
- *               "price": "12",
- *               "quantity": 4
- *           },
- *           {
- *               "id": "3",
- *             "name": "orange",
- *              "price": "12",
- *               "quantity": "2"
- *          }
- *       ]
- *   }
- *
- * @apiError User was not found.
- *
- * @apiErrorExample Error-Response:
- *     {
- *        "posted": false
- *     }
- */
 app.get('/api/userProfile', [userProfile])//get the usre profile
 
 
