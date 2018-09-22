@@ -11,7 +11,7 @@ This is the Shopify developer challenge for the Winter 2019 term.
 
 ## Deployment
 
-![alt text](https://ibb.co/bv3JCU)
+![kuber.png](https://postimg.cc/R6YSZ2CR)
 
 ##Documentation
 
