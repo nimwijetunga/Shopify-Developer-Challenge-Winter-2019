@@ -13,7 +13,7 @@ This is the Shopify developer challenge for the Winter 2019 term.
 
 ![kuber.png](https://i.postimg.cc/zvzV0199/kuber.png)
 
-##Documentation
+## Documentation
 
 * Documentation for this project has been generated via [apiDoc](http://apidocjs.com/)
 * The documentation can be found at either:
